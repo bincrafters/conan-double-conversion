@@ -1,9 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import os
 from conans import ConanFile, CMake, tools
 from conans.errors import ConanInvalidConfiguration
-import os
+from conans.model.version import Version
 
 
 class DoubleConversionConan(ConanFile):
@@ -13,7 +12,8 @@ class DoubleConversionConan(ConanFile):
     homepage = "https://github.com/google/double-conversion"
     description = "Efficient binary-decimal and decimal-binary conversion routines for IEEE doubles."
     author = "Bincrafters <bincrafters@gmail.com>"
-    license = "BSD-3"
+    license = "BSD-3-Clause"
+    topics = ("conan", "double-conversion", "google", "decimal-binary", "conversion")
     exports = ["LICENSE.md"]
     exports_sources = ["CMakeLists.txt"]
     generators = "cmake"
@@ -25,16 +25,17 @@ class DoubleConversionConan(ConanFile):
 
     def config_options(self):
         if self.settings.os == "Windows":
-            self.options.remove("fPIC")
+            del self.options.fPIC
 
     def configure(self):
         if self.settings.os == "Windows" and \
-           self.settings.compiler == "Visual Studio" and \
-           float(self.settings.compiler.version.value) < 14:
+            self.settings.compiler == "Visual Studio" and \
+            Version(self.settings.compiler.version.value) < "14":
             raise ConanInvalidConfiguration("Double Convertion could not be built by MSVC <14")
 
     def source(self):
-        tools.get("{0}/archive/v{1}.tar.gz".format(self.homepage, self.version))
+        sha256 = "95004b65e43fefc6100f337a25da27bb99b9ef8d4071a36a33b5e83eb1f82021"
+        tools.get("{0}/archive/v{1}.tar.gz".format(self.homepage, self.version), sha256=sha256)
         extracted_dir = self.name + "-" + self.version
         os.rename(extracted_dir, self._source_subfolder)
 
@@ -50,7 +51,7 @@ class DoubleConversionConan(ConanFile):
     def package(self):
         cmake = self._configure_cmake()
         cmake.install()
-        self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder, keep_path=False)
+        self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
 
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self)
